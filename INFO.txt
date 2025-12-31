@@ -1,0 +1,37 @@
+src/
+ ├─ core/
+ │   ├─ Game.js
+ │   ├─ GameLoop.js
+ │   ├─ Input.js
+ │   ├─ Time.js
+ │   └─ Camera.js
+ │
+ ├─ entities/
+ │   ├─ Entity.js
+ │   ├─ Player.js
+ │   ├─ Enemy.js
+ │   └─ Projectile.js
+ │
+ ├─ systems/
+ │   ├─ MovementSystem.js
+ │   ├─ ShootingSystem.js
+ │   ├─ EnemyAISystem.js
+ │   ├─ CollisionSystem.js
+ │   ├─ HealthSystem.js
+ │   └─ RenderSystem.js
+ │
+ ├─ weapons/
+ │   ├─ Weapon.js
+ │   ├─ Pistol.js
+ │   └─ Shotgun.js
+ │
+ ├─ enemies/
+ │   ├─ EnemyFactory.js
+ │   ├─ BasicEnemy.js
+ │   └─ FastEnemy.js
+ │
+ ├─ utils/
+ │   ├─ Vector2.js
+ │   └─ Math.js
+ │
+ └─ index.js

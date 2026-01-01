@@ -10,6 +10,7 @@ src/
  │   ├─ Entity.js
  │   ├─ Player.js
  │   ├─ Enemy.js
+ │   ├─ BasicEnemy.js
  │   └─ Projectile.js
  │
  ├─ systems/
@@ -25,10 +26,8 @@ src/
  │   ├─ Pistol.js
  │   └─ Shotgun.js
  │
- ├─ enemies/
+ ├─ factories/
  │   ├─ EnemyFactory.js
- │   ├─ BasicEnemy.js
- │   └─ FastEnemy.js
  │
  ├─ utils/
  │   ├─ Vector2.js

@@ -1,163 +1,231 @@
-import { Player } from "../entities/Player.js";
-import { InputSystem } from "../systems/InputSystem.js";
-import { MovementSystem } from "../systems/MovementSystem.js";
-import { Input } from "../core/Input.js";
 import { GAME_STATE, WORLD } from "../config/constants.js";
 import { Camera } from "./Camera.js";
+import { Input } from "./Input.js";
+import { AudioManager } from "./AudioManager.js";
+import { loadGameAudio } from "../config/audio.js";
+
+import { Player } from "../entities/Player.js";
+
+import { InputSystem } from "../systems/InputSystem.js";
+import { MovementSystem } from "../systems/MovementSystem.js";
 import { ShootingSystem } from "../systems/ShootingSystem.js";
 import { CollisionSystem } from "../systems/CollisionSystem.js";
-import { Enemy } from "../entities/Enemy.js";
+import { EnemySpawnSystem } from "../systems/EnemySpawnSystem.js";
+import { EnemyAISystem } from "../systems/EnemyAISystem.js";
+import { DamageTextSystem } from "../systems/DamageTextSystem.js";
+
+import { MenuScreen } from "../ui/MenuScreen.js";
+import { GameOverScreen } from "../ui/GameOverScreen.js";
+import { GameTimer } from "./GameTimer.js";
+import { HUD } from "../ui/HUD.js";
+import { Pistol } from "../weapons/Pistol.js";
+import { Shotgun } from "../weapons/Shotgun.js";
+
 export class Game {
   constructor(ctx, canvas) {
     this.ctx = ctx;
     this.canvas = canvas;
 
+    this.state = GAME_STATE.MENU;
     this.worldSize = { width: WORLD.WIDTH, height: WORLD.HEIGHT };
 
-    // 1. Камера
+    // --- Core ---
+    this.input = new Input(canvas);
+    this.audio = new AudioManager();
+    loadGameAudio(this.audio);
+
     this.camera = new Camera(
-      this.canvas.width,
-      this.canvas.height,
+      canvas.width,
+      canvas.height,
       this.worldSize.width,
       this.worldSize.height
     );
 
-    this.state = GAME_STATE.PLAYING;
-
-    // 2. Создаем игрока и помечаем его, чтобы MovementSystem знала, кого "клэмпить" (ограничивать)
-    this.player = new Player(this.worldSize);
+    // --- Entities ---
+    this.player = new Player(this.worldSize, this.audio);
     this.player.isPlayer = true;
+    this.entities = [this.player];
 
-    // 3. Системы
-    this.input = new Input(this.canvas);
+    this.weapon = new Pistol();
+
+    // --- Systems ---
     this.inputSystem = new InputSystem(this.input, this.player);
     this.movementSystem = new MovementSystem(
       this.worldSize.width,
       this.worldSize.height
     );
-    this.shootingSystem = new ShootingSystem(this.camera);
-    this.collisionSystem = new CollisionSystem();
+    this.shootingSystem = new ShootingSystem(
+      this.camera,
+      this.audio,
+      this.weapon
+    );
+    this.damageTextSystem = new DamageTextSystem();
+    this.collisionSystem = new CollisionSystem(
+      this.audio,
+      this.weapon,
+      this.damageTextSystem
+    );
+    this.enemySpawnSystem = new EnemySpawnSystem(this.worldSize, this.audio);
+    this.enemyAISystem = new EnemyAISystem();
 
-    this.enemyTimer = 0;
-    this.enemySpawnInterval = 2; // спавн каждые 2 секунды
+    // --- UI / Screens ---
+    this.menuScreen = new MenuScreen(this);
+    this.gameOverScreen = new GameOverScreen(this);
+    this.timeSurvival = new GameTimer();
+    this.hud = new HUD(this);
 
-    // 4. Единый список сущностей для всех систем
-    this.entities = [this.player];
-
-    this.userPaused = false;
     this.focusPaused = false;
   }
 
-  get isPaused() {
-    return (
-      this.state === GAME_STATE.PAUSED || this.userPaused || this.focusPaused
-    );
-  }
-
   update(dt) {
-    this.handleGlobalInput();
-    if (this.isPaused) return;
+    switch (this.state) {
+      case GAME_STATE.MENU:
+        this.menuScreen.update();
+        break;
 
-    // 1. Спавн врагов
-    this.spawnEnemies(dt);
+      case GAME_STATE.PAUSED:
+        if (this.input.wasPressed("Escape")) {
+          this.resume();
+        }
+        break;
 
-    // 2. Обновление систем
-    this.inputSystem.update(this.entities, dt);
-    this.shootingSystem.update(dt, this.input, this.player, this.entities);
+      case GAME_STATE.GAMEOVER:
+        this.gameOverScreen.update();
+        break;
 
-    // 3. Заставляем врагов бежать к игроку
-    this.entities.forEach((e) => {
-      if (e instanceof Enemy) e.update(dt, this.player);
-    });
+      case GAME_STATE.PLAYING:
+        this.updatePlaying(dt);
+        break;
+    }
 
-    this.movementSystem.update(this.entities, dt);
-
-    // 4. Проверка столкновений
-    this.collisionSystem.update(this.entities);
-
-    this.cleanupEntities();
-    this.camera.update(this.player);
     this.input.endFrame();
   }
 
-  spawnEnemies(dt) {
-    this.enemyTimer += dt;
-    if (this.enemyTimer >= this.enemySpawnInterval) {
-      // Генерируем случайные координаты (например, по краям мира)
-      const x = Math.random() * this.worldSize.width;
-      const y = Math.random() * this.worldSize.height;
+  updatePlaying(dt) {
+    if (this.input.wasPressed("Escape")) {
+      this.pause();
+      return;
+    }
 
-      // Чтобы враг не появился прямо в игроке:
-      const distToPlayer = Math.hypot(x - this.player.x, y - this.player.y);
-      if (distToPlayer > 300) {
-        const enemy = new Enemy(x, y, 20, "red", 150);
-        this.entities.push(enemy);
-        this.enemyTimer = 0;
+    if (this.isPaused) return;
+
+    this.timeSurvival.update(dt);
+
+    this.enemySpawnSystem.update(dt, this.entities, this.player);
+
+    this.inputSystem.update(this.entities, dt);
+    this.shootingSystem.update(dt, this.input, this.player, this.entities);
+
+    this.player.update(dt);
+    this.enemyAISystem.update(dt, this.entities, this.player);
+    this.movementSystem.update(this.entities, dt);
+    this.collisionSystem.update(this.entities, this.player);
+    this.damageTextSystem.update(dt);
+
+    for (const entity of this.entities) {
+      if (entity.update) {
+        entity.update(dt);
       }
     }
-  }
 
-  handleGlobalInput() {
-    if (this.input.wasPressed("Escape")) {
-      this.isPaused ? this.resume() : this.pause();
+    if (this.player.health <= 0) {
+      this.state = GAME_STATE.GAMEOVER;
     }
+
+    this.cleanupEntities();
+    this.camera.update(this.player);
   }
 
-  cleanupEntities() {
-    // Оставляем только те, у кого toRemove === false
-    this.entities = this.entities.filter((e) => !e.toRemove);
-  }
-
-  pause() {
-    this.state = GAME_STATE.PAUSED;
-    this.input.clearAll(); // Очищаем клавиши, чтобы игрок не "бежал" в паузе
-  }
-
-  resume() {
-    this.state = GAME_STATE.PLAYING;
-    this.focusPaused = false; // Сбрасываем флаг фокуса при ручном возобновлении
-  }
+  /* ================= RENDER ================= */
 
   render(alpha) {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    this.ctx.save(); // Сохраняем состояние контекста
-    // Сдвигаем весь мир в обратную сторону от камеры
+    switch (this.state) {
+      case GAME_STATE.MENU:
+        this.menuScreen.render(this.ctx, this.canvas);
+        return;
+
+      case GAME_STATE.GAMEOVER:
+        this.gameOverScreen.render(this.ctx, this.canvas);
+        return;
+    }
+
+    // --- World ---
+    this.ctx.save();
     this.ctx.translate(-this.camera.x, -this.camera.y);
 
-    // РИСУЕМ МИР (например, фон игрового мира)
+    this.hud.render(this.ctx);
+
     this.ctx.fillStyle = "#1a1a1a";
     this.ctx.fillRect(0, 0, this.worldSize.width, this.worldSize.height);
 
-    // РИСУЕМ ВСЕ СУЩНОСТИ
     for (const entity of this.entities) {
       entity.render(this.ctx);
     }
 
-    this.ctx.restore(); // Возвращаем контекст в исходное состояние
+    // Рисуем цифры урона поверх сущностей
+    this.damageTextSystem.render(this.ctx);
 
-    // РИСУЕМ ПАУЗУ ПОВЕРХ ВСЕГО (в координатах экрана)
+    this.ctx.restore();
+
+    // --- UI ---
+    this.hud.render(this.ctx);
+
     if (this.isPaused) {
       this.renderPauseOverlay();
     }
   }
 
+  /* ================= STATE ================= */
+
+  get isPaused() {
+    return this.state === GAME_STATE.PAUSED || this.focusPaused;
+  }
+
+  startGame() {
+    this.state = GAME_STATE.PLAYING;
+    this.input.clearAll();
+    this.timeSurvival.start();
+    this.audio.playLoop("background3", 0.7);
+  }
+
+  restart() {
+    this.player = new Player(this.worldSize, this.audio);
+    this.player.isPlayer = true;
+    this.entities = [this.player];
+
+    this.inputSystem.player = this.player;
+    this.enemySpawnSystem.reset();
+
+    this.state = GAME_STATE.PLAYING;
+    this.input.clearAll();
+  }
+
+  pause() {
+    this.state = GAME_STATE.PAUSED;
+    this.timeSurvival.stop();
+    this.input.clearAll();
+  }
+
+  resume() {
+    this.state = GAME_STATE.PLAYING;
+    this.focusPaused = false;
+    this.timeSurvival.start();
+  }
+
+  cleanupEntities() {
+    this.entities = this.entities.filter((e) => !e.toRemove);
+  }
+
   renderPauseOverlay() {
-    // Затемнение всего экрана
-    this.ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    const ctx = this.ctx;
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Текст
-    this.ctx.fillStyle = "white";
-    this.ctx.textAlign = "center";
-    this.ctx.font = "bold 48px sans-serif";
-    this.ctx.fillText("PAUSED", this.canvas.width / 2, this.canvas.height / 2);
-
-    this.ctx.font = "20px sans-serif";
-    this.ctx.fillText(
-      "Press ESC to Resume",
-      this.canvas.width / 2,
-      this.canvas.height / 2 + 50
-    );
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    ctx.font = "bold 48px sans-serif";
+    ctx.fillText("PAUSED", this.canvas.width / 2, this.canvas.height / 2);
   }
 }

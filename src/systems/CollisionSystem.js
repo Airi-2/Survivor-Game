@@ -1,18 +1,36 @@
 export class CollisionSystem {
-  update(entities) {
+  constructor(audio, weapon, damageTextSystem) {
+    this.audio = audio;
+    this.weapon = weapon;
+    this.damageTextSystem = damageTextSystem; // <--- важно
+  }
+
+  update(entities, player) {
     // Разделяем сущности по типам для оптимизации
-    const projectiles = entities.filter(e => e.type === "PROJECTILE");
-    const enemies = entities.filter(e => e.type === "ENEMY");
+    const projectiles = entities.filter((e) => e.type === "PROJECTILE");
+    const enemies = entities.filter((e) => e.type === "ENEMY");
 
-    for (const p of projectiles) {
-      for (const e of enemies) {
-        // Если уже помечены на удаление, пропускаем
-        if (p.toRemove || e.toRemove) continue;
+    for (const e of enemies) {
+      if (e.toRemove) continue;
 
+      // 1. Проверка: Враг + Пуля
+      for (const p of projectiles) {
+        if (p.toRemove) continue;
         if (this.checkCollision(p, e)) {
+          this.audio.play("hit", 0.4);
           p.toRemove = true;
-          e.toRemove = true;
+
+          const damage = this.weapon.damage;
+          e.takeDamage(damage);
+
+          // координаты для текста: центр врага
+          this.damageTextSystem.addDamage(e.x, e.y, damage);
         }
+      }
+
+      // 2. Проверка: Враг + Игрок
+      if (this.checkCollision(e, player)) {
+        player.takeDamage(10); // Отнимаем 10 HP
       }
     }
   }
@@ -20,9 +38,6 @@ export class CollisionSystem {
   checkCollision(a, b) {
     const dx = a.x - b.x;
     const dy = a.y - b.y;
-    // Расстояние между центрами (Пифагор)
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    // Столкнулись, если расстояние меньше суммы радиусов
-    return distance < a.radius + b.radius;
+    return Math.hypot(dx, dy) < a.radius + b.radius;
   }
 }

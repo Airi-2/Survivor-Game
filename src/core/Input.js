@@ -2,7 +2,12 @@ export class Input {
   constructor(canvas) {
     this.keys = new Set();
     this.justPressed = new Set();
-    this.mouse = { x: 0, y: 0, pressed: false };
+    this.mouse = {
+      x: 0,
+      y: 0,
+      pressed: false,
+      justPressed: false,
+    };
 
     window.addEventListener("keydown", (e) => {
       if (!this.keys.has(e.code)) {
@@ -24,7 +29,12 @@ export class Input {
       this.mouse.y = e.clientY - rect.top;
     });
 
-    canvas.addEventListener("mousedown", () => (this.mouse.pressed = true));
+    canvas.addEventListener("mousedown", () => {
+      if (!this.mouse.pressed) {
+        this.mouse.justPressed = true;
+      }
+      this.mouse.pressed = true;
+    });
     canvas.addEventListener("mouseup", () => (this.mouse.pressed = false));
   }
 
@@ -37,6 +47,10 @@ export class Input {
 
   isDown(code) {
     return this.keys.has(code);
+  }
+
+  wasMousePressed() {
+    return this.mouse.justPressed;
   }
 
   wasPressed(code) {

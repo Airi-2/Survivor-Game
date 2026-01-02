@@ -5,8 +5,8 @@ export const CANVAS = {
 };
 
 export const WORLD = {
-  WIDTH: 1280,
-  HEIGHT: 720,
+  WIDTH: 1920,
+  HEIGHT: 1080,
 };
 
 // Игровой цикл - FIXED TIMESTEP с ACCUMULATOR
@@ -24,6 +24,7 @@ export const GAME_STATE = {
   PLAYING: "PLAYING",
   PAUSED: "PAUSED",
   MENU: "MENU",
+  GAMEOVER: "GAMEOVER",
 };
 
 export const PLAYER = {

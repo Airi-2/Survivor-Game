@@ -6,6 +6,7 @@ export class HUD {
   render(ctx) {
     this.renderHealth(ctx);
     this.renderTimer(ctx);
+    this.renderAmmo(ctx);
   }
 
   renderTimer(ctx) {
@@ -35,5 +36,30 @@ export class HUD {
 
     ctx.strokeStyle = "white";
     ctx.strokeRect(x, y, width, height);
+  }
+
+  renderAmmo(ctx) {
+    const weapon = this.game.shootingSystem.weapon; // Убедись, что путь к оружию верный
+    const x = 20;
+    const y = this.game.canvas.height - 40;
+
+    // Отрисовка текста патронов
+    ctx.fillStyle = "white";
+    ctx.font = "24px monospace";
+    ctx.textAlign = "left";
+
+    let text = `AMMO: ${weapon.ammo} / ${weapon.magSize}`;
+    if (weapon.isReloading) text = "RELOADING...";
+
+    ctx.fillText(text, x, y);
+
+    // Полоска прогресса перезарядки (если нужно)
+    if (weapon.isReloading) {
+      const progress = 1 - weapon.reloadTimer / weapon.reloadTime;
+      ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.fillRect(x, y + 10, 150, 5);
+      ctx.fillStyle = "yellow";
+      ctx.fillRect(x, y + 10, 150 * progress, 5);
+    }
   }
 }

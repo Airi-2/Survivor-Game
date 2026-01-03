@@ -13,6 +13,10 @@ export class Shotgun extends Weapon {
 
     this.pellets = 5; // количество пуль за выстрел
     this.spread = 15; // угол в градусах
+
+    this.magSize = 2;
+    this.ammo = this.magSize;
+    this.reloadTime = 1;
   }
 
   shoot(player, targetX, targetY) {

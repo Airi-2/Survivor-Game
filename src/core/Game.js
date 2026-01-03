@@ -46,7 +46,7 @@ export class Game {
     this.player.isPlayer = true;
     this.entities = [this.player];
 
-    this.weapon = new Pistol();
+    this.weapon = new Shotgun();
 
     // --- Systems ---
     this.inputSystem = new InputSystem(this.input, this.player);
@@ -187,7 +187,7 @@ export class Game {
     this.state = GAME_STATE.PLAYING;
     this.input.clearAll();
     this.timeSurvival.start();
-    this.audio.playLoop("background3", 0.7);
+    this.audio.playLoop("background1", 0.7);
   }
 
   restart() {

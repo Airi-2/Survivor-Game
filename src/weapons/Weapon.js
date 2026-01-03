@@ -6,6 +6,8 @@ export class Weapon {
     projectileRadius = 5,
     projectileColor = "yellow",
     range = 1000,
+    magSize = 12, // Вместимость магазина
+    reloadTime = 1.5, // Время перезарядки в секундах
   } = {}) {
     this.damage = damage;
     this.fireRate = fireRate;
@@ -14,16 +16,43 @@ export class Weapon {
     this.projectileColor = projectileColor;
     this.range = range;
 
+    // Логика патронов
+    this.magSize = magSize;
+    this.ammo = magSize;
+    this.reloadTime = reloadTime;
+    this.reloadTimer = 0;
+    this.isReloading = false;
+
     this.timer = 0;
   }
 
   canShoot(dt) {
     this.timer -= dt;
-    return this.timer <= 0;
+
+    // Не можем стрелять, если: идет перезарядка, кончились патроны или не откатился КД выстрела
+    if (this.isReloading || this.ammo <= 0 || this.timer > 0) return false;
+    return true;
+  }
+
+  reload() {
+    if (this.isReloading || this.ammo === this.magSize) return;
+    this.isReloading = true;
+    this.reloadTimer = this.reloadTime;
+  }
+
+  updateReload(dt) {
+    if (!this.isReloading) return;
+
+    this.reloadTimer -= dt;
+    if (this.reloadTimer <= 0) {
+      this.ammo = this.magSize;
+      this.isReloading = false;
+    }
   }
 
   resetTimer() {
     this.timer = this.fireRate;
+    this.ammo--; // Тратим патрон при выстреле
   }
 
   // Базовый метод shoot возвращает один снаряд

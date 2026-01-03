@@ -16,7 +16,7 @@ export class EnemySpawnSystem {
     const y = Math.random() * this.worldSize.height;
 
     if (Math.hypot(x - player.x, y - player.y) > 300) {
-      entities.push(new Enemy(x, y, 20, "red", 150, 150, this.audio));
+      entities.push(new Enemy(x, y, 20, "red", 150, 50, this.audio));
       this.timer = 0;
     }
   }

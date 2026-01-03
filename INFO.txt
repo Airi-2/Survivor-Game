@@ -41,4 +41,8 @@ src/
  │   ├─ GameOverScreen.js
  │   └─ HUD.js
  │
+ ├─ config/
+ │   ├─ audio.js
+ │   ├─ constants.js
+ │
  └─ index.js

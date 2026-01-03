@@ -5,7 +5,7 @@ export class CollisionSystem {
     this.damageTextSystem = damageTextSystem; // <--- важно
   }
 
-  update(entities, player) {
+  update(entities, player, world) {
     // Разделяем сущности по типам для оптимизации
     const projectiles = entities.filter((e) => e.type === "PROJECTILE");
     const enemies = entities.filter((e) => e.type === "ENEMY");
@@ -21,7 +21,7 @@ export class CollisionSystem {
           p.toRemove = true;
 
           const damage = this.weapon.damage;
-          e.takeDamage(damage);
+          e.takeDamage(damage, world);
 
           // координаты для текста: центр врага
           this.damageTextSystem.addDamage(e.x, e.y, damage);
@@ -30,7 +30,9 @@ export class CollisionSystem {
 
       // 2. Проверка: Враг + Игрок
       if (this.checkCollision(e, player)) {
-        player.takeDamage(10); // Отнимаем 10 HP
+        // Используем урон врага, если он задан, иначе 10
+        const damage = e.contactDamage || 10;
+        player.takeDamage(damage);
       }
     }
   }

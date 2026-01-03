@@ -62,4 +62,27 @@ export class HUD {
       ctx.fillRect(x, y + 10, 150 * progress, 5);
     }
   }
+
+  renderExperience(ctx) {
+    const levelSystem = this.game.levelSystem;
+    const x = 0;
+    const y = 0; // На самом верху экрана
+    const width = this.game.canvas.width;
+    const height = 10;
+
+    // Фон полоски
+    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+    ctx.fillRect(x, y, width, height);
+
+    // Прогресс
+    const progress = levelSystem.experience / levelSystem.expToNextLevel;
+    ctx.fillStyle = "#00ffcc";
+    ctx.fillRect(x, y, width * progress, height);
+
+    // Текст уровня
+    ctx.fillStyle = "white";
+    ctx.font = "bold 14px Arial";
+    ctx.textAlign = "left";
+    ctx.fillText(`LVL ${levelSystem.level}`, 10, 25);
+  }
 }

@@ -16,8 +16,11 @@ const gameLoop = new GameLoop(
 
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
-    game.pause(); // Переключаем игру в состояние паузы
-    game.focusPaused = true;
+    // Ставим на паузу ТОЛЬКО если мы сейчас играем
+    if (game.state === GAME_STATE.PLAYING) {
+      game.pause();
+      game.focusPaused = true;
+    }
   } else {
     // Когда вернулись, мы НЕ вызываем game.resume()
     // Мы просто чистим время, чтобы после ручного снятия паузы объекты не телепортировались

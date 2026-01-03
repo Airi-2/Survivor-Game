@@ -25,6 +25,7 @@ export const GAME_STATE = {
   PAUSED: "PAUSED",
   MENU: "MENU",
   GAMEOVER: "GAMEOVER",
+  UPGRADE: "UPGRADE",
 };
 
 export const PLAYER = {

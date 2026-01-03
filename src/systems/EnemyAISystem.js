@@ -22,7 +22,7 @@ export class EnemyAISystem {
     }
 
     // 2. Расталкивание
-    const personalSpace = enemy.radius * 3;
+    const personalSpace = enemy.radius * 2.5;
 
     for (const other of allEnemies) {
       if (other === enemy) continue;
@@ -32,7 +32,7 @@ export class EnemyAISystem {
       const d = Math.hypot(diffX, diffY);
 
       if (d > 0 && d < personalSpace) {
-        const force = ((personalSpace - d) / personalSpace) * 1.2;
+        const force = ((personalSpace - d) / personalSpace) * 2;
         moveX += (diffX / d) * enemy.speed * force;
         moveY += (diffY / d) * enemy.speed * force;
       }

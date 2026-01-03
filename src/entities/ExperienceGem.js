@@ -6,7 +6,7 @@ export class ExperienceGem extends Entity {
     this.type = "EXP";
     this.value = value;
     this.velocity = { x: 0, y: 0 };
-    this.friction = 0.95; // Чтобы кристалл мог немного "отлететь" при появлении
+    this.friction = 0.92; // Чтобы кристалл мог немного "отлететь" при появлении
   }
 
   update(dt) {
@@ -14,5 +14,16 @@ export class ExperienceGem extends Entity {
     this.y += this.velocity.y * dt;
     this.velocity.x *= this.friction;
     this.velocity.y *= this.friction;
+  }
+
+  render(ctx) {
+    // Визуальный эффект: небольшое свечение
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = this.color;
+
+    super.render(ctx);
+
+    // Сбрасываем тени, чтобы не тормозило остальное
+    ctx.shadowBlur = 0;
   }
 }

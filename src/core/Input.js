@@ -59,5 +59,6 @@ export class Input {
 
   endFrame() {
     this.justPressed.clear();
+    this.mouse.justPressed = false;
   }
 }

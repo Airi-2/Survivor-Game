@@ -18,12 +18,14 @@ import { EnemyAISystem } from "../systems/EnemyAISystem.js";
 import { DamageTextSystem } from "../systems/DamageTextSystem.js";
 import { MovementSystem } from "../systems/MovementSystem.js";
 import { LevelSystem } from "../systems/LevelSystem.js";
+import { UpgradeSystem } from "../systems/UpgradeSystem.js";
 
 // UI
 import { MenuScreen } from "../ui/MenuScreen.js";
 import { GameOverScreen } from "../ui/GameOverScreen.js";
 import { HUD } from "../ui/HUD.js";
 import { InputSystem } from "../systems/InputSystem.js";
+import { UpgradeScreen } from "../ui/UpgradeScreen.js";
 
 export class Game {
   constructor(ctx, canvas) {
@@ -48,7 +50,7 @@ export class Game {
   initEntities() {
     this.player = new Player(this.world, this.audio);
     this.player.isPlayer = true;
-    this.weapon = new Shotgun();
+    this.weapon = new Pistol();
     this.world.addEntity(this.player);
   }
 
@@ -61,13 +63,15 @@ export class Game {
     this.collisionSystem = new CollisionSystem(this.audio, this.weapon, this.damageTextSystem);
     this.enemySpawnSystem = new EnemySpawnSystem(this.world, this.audio);
     this.enemyAISystem = new EnemyAISystem();
-    this.levelSystem = new LevelSystem();
+    this.levelSystem = new LevelSystem(this);
+    this.upgradeSystem = new UpgradeSystem(this);
   }
 
   initUI() {
     this.menuScreen = new MenuScreen(this);
     this.gameOverScreen = new GameOverScreen(this);
     this.hud = new HUD(this);
+    this.upgradeScreen = new UpgradeScreen(this);
   }
 
   update(dt) {
@@ -83,6 +87,9 @@ export class Game {
         break;
       case GAME_STATE.PLAYING:
         this.updatePlaying(dt);
+        break;
+      case GAME_STATE.UPGRADE:
+        this.upgradeScreen.update(dt);
         break;
     }
     this.input.endFrame();
@@ -112,6 +119,27 @@ export class Game {
 
   render() {
     this.renderSystem.render(this);
+  }
+
+  // Новые методы управления
+  showUpgradeScreen() {
+    this.state = GAME_STATE.UPGRADE;
+    this.timeSurvival.stop(); // Время не идет, пока выбираем
+
+    // Останавливаем игрока на месте, чтобы он не улетел в стену
+    if (this.player && this.player.velocity) {
+      this.player.velocity.x = 0;
+      this.player.velocity.y = 0;
+    }
+
+    const options = this.upgradeSystem.getRandomUpgrades(3);
+    this.upgradeScreen.setOptions(options);
+  }
+
+  resumeAfterUpgrade() {
+    this.state = GAME_STATE.PLAYING;
+    this.timeSurvival.start();
+    this.input.clearAll(); // Очищаем клик, чтобы не выстрелить сразу
   }
 
   // --- Контроль состояний ---

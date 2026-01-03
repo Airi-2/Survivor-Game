@@ -41,6 +41,11 @@ export class RenderSystem {
     hud.render(ctx);
     hud.renderExperience(ctx);
 
+    if (state === game.GAME_STATE.UPGRADE) {
+      game.upgradeScreen.render(ctx, canvas);
+      return;
+    }
+
     if (game.isPaused) {
       this.renderPauseOverlay();
     }

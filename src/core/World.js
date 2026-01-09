@@ -1,7 +1,6 @@
 export class World {
-  constructor(width, height) {
-    this.width = width;
-    this.height = height;
+  constructor(tileSize) {
+    this.tileSize = tileSize; // Используем для расчетов сетки
     this.entities = [];
   }
 

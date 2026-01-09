@@ -2,25 +2,28 @@ import { Entity } from "./Entity.js";
 import { PLAYER } from "../config/constants.js";
 
 export class Player extends Entity {
-  constructor(world, audio) {
-    // Вызываем конструктор родителя (Entity)
-    super(world.width / 2, world.height / 2, PLAYER.RADIUS, PLAYER.COLOR);
+  constructor(config, audio) {
+    // Вызываем Entity: x, y, radius, color
+    super(config.x, config.y, PLAYER.RADIUS, config.color);
 
+    this.name = config.name;
     this.speed = PLAYER.SPEED;
-    this.isPlayer = true;
-    this.type = "PLAYER"; // Добавляем тип для системы коллизий
+    this.type = "PLAYER";
 
-    // Здоровье
-    this.maxHealth = 100;
+    // Здоровье берем из конфига
+    this.maxHealth = config.health || 100;
     this.health = this.maxHealth;
 
-    // Параметры I-frames
+    // Оружие
+    this.weapon = config.weapon;
+
+    // Таймеры
     this.invulnerableTimer = 0;
     this.invulnerableDuration = 1.0;
 
     this.audio = audio;
   }
-
+  
   update(dt) {
     // Уменьшаем таймер неуязвимости
     if (this.invulnerableTimer > 0) {

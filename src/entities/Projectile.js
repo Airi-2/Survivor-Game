@@ -15,10 +15,6 @@ export class Projectile extends Entity {
   }
 
   update(dt) {
-    // Двигаемся
-    this.x += this.velocity.x * dt;
-    this.y += this.velocity.y * dt;
-
     // Проверяем дальность
     const dist = Math.hypot(this.x - this.startX, this.y - this.startY);
     if (dist >= this.range) {

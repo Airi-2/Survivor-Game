@@ -1,8 +1,7 @@
 import { Enemy } from "../entities/Enemy.js";
 
 export class EnemySpawnSystem {
-  constructor(worldSize, audio) {
-    this.worldSize = worldSize;
+  constructor(audio) {
     this.audio = audio;
 
     this.spawnTimer = 0; // Таймер для обычных врагов

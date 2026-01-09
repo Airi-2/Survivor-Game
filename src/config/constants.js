@@ -5,8 +5,9 @@ export const CANVAS = {
 };
 
 export const WORLD = {
-  WIDTH: 1920,
-  HEIGHT: 1080,
+  // WIDTH: 1920,
+  // HEIGHT: 1080,
+  TILE_SIZE: 512, // Размер одного квадрата пола
 };
 
 // Игровой цикл - FIXED TIMESTEP с ACCUMULATOR

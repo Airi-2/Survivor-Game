@@ -20,18 +20,15 @@ export class LevelSystem {
   }
 
   levelUp() {
-    if (this.game.state === "UPGRADE") return; // Защита от двойного вызова
-
     this.experience -= this.expToNextLevel;
     this.level++;
-    // Формула усложнения: каждый уровень требует на 20% больше опыта
     this.expToNextLevel = Math.round(this.expToNextLevel * 1.2 + 5);
 
-    // Очищаем ввод перед открытием меню
     this.game.input.clearAll();
 
-    // Вызываем состояние паузы для выбора улучшения в игре
-    this.game.showUpgradeScreen();
+    this.game.events.emit("LEVEL_UP", {
+      level: this.level,
+    });
   }
 
   update(dt, player, entities) {

@@ -26,11 +26,17 @@ export class DamageText {
     this.y += this.vy * dt; // <-- используй vy, а не velocityY
   }
 
-  render(ctx) {
-    ctx.fillStyle = `rgba(255, 255, 0, ${this.alpha})`; // желтые цифры
+  render(ctx, camera) {
+    ctx.save();
+    ctx.fillStyle = `rgba(255, 255, 0, ${this.alpha})`;
     ctx.font = "20px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(this.amount, this.x + this.offsetX, this.y + this.offsetY);
+
+    // Вычитаем координаты камеры, чтобы текст был привязан к точке в мире
+    const screenX = this.x + this.offsetX - camera.x;
+    const screenY = this.y + this.offsetY - camera.y;
+
+    ctx.fillText(this.amount, screenX, screenY);
+    ctx.restore();
   }
 
   get isDead() {

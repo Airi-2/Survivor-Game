@@ -1,20 +1,14 @@
 export class UpgradeScreen {
-  constructor(game) {
+  constructor(game, options) {
     this.game = game;
-    this.currentOptions = [];
-    this.cooldown = 0;
-  }
-
-  // Подготавливаем опции для выбора
-  setOptions(options) {
     this.currentOptions = options;
-    this.cooldown = 0.2; // Блокируем клики на 0.2 секунды после открытия
+    this.cooldown = 0.3; // Чуть больше задержка, чтобы избежать случайных кликов
   }
 
   update(dt) {
     if (this.cooldown > 0) {
       this.cooldown -= dt;
-      return;
+      return null; // Ничего не возвращаем, пока КД
     }
 
     const { input, canvas } = this.game;
@@ -22,39 +16,32 @@ export class UpgradeScreen {
     if (input.wasMousePressed()) {
       const mouse = input.mouse;
       const cardWidth = 200;
-      const cardHeight = 150;
-      const spacing = 20;
+      const cardHeight = 250; // Увеличим высоту, чтобы влез текст
+      const spacing = 30;
       const totalWidth = this.currentOptions.length * (cardWidth + spacing) - spacing;
       const startX = (canvas.width - totalWidth) / 2;
       const startY = (canvas.height - cardHeight) / 2;
 
-      // Проверяем, в какую карточку кликнули
-      this.currentOptions.forEach((option, index) => {
-        const x = startX + index * (cardWidth + spacing);
+      for (let i = 0; i < this.currentOptions.length; i++) {
+        const x = startX + i * (cardWidth + spacing);
         const y = startY;
 
         if (mouse.x >= x && mouse.x <= x + cardWidth && mouse.y >= y && mouse.y <= y + cardHeight) {
-          option.apply(); // Применяем улучшение
-          this.game.input.clearAll(); // Очистить клик, чтобы не выстрелить после закрытия
-          this.game.resumeAfterUpgrade(); // Возвращаемся в игру
+          return this.currentOptions[i]; // Возвращаем выбранный объект улучшения
         }
-      });
+      }
     }
+    return null;
   }
 
   render(ctx, canvas) {
-    // Затемнение фона
-    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+    // Полупрозрачный фон
+    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = "white";
-    ctx.textAlign = "center";
-    ctx.font = "bold 32px sans-serif";
-    ctx.fillText("ВЫБЕРИТЕ УЛУЧШЕНИЕ", canvas.width / 2, canvas.height / 2 - 150);
-
     const cardWidth = 200;
-    const cardHeight = 150;
-    const spacing = 20;
+    const cardHeight = 250;
+    const spacing = 30;
     const totalWidth = this.currentOptions.length * (cardWidth + spacing) - spacing;
     const startX = (canvas.width - totalWidth) / 2;
     const startY = (canvas.height - cardHeight) / 2;
@@ -63,24 +50,28 @@ export class UpgradeScreen {
       const x = startX + index * (cardWidth + spacing);
       const y = startY;
 
-      // Рамка карточки
+      // Рисуем карточку
+      ctx.fillStyle = "#1a1a1a";
       ctx.strokeStyle = "#00ffcc";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x, y, cardWidth, cardHeight);
-      ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-      ctx.fillRect(x, y, cardWidth, cardHeight);
+      ctx.lineWidth = 3;
 
-      // Текст внутри
-      ctx.fillStyle = "white";
+      // Скругленный прямоугольник (упрощенно)
+      ctx.fillRect(x, y, cardWidth, cardHeight);
+      ctx.strokeRect(x, y, cardWidth, cardHeight);
+
+      // Заголовок
+      ctx.fillStyle = "#00ffcc";
       ctx.font = "bold 18px sans-serif";
+      ctx.textAlign = "center";
       ctx.fillText(option.title, x + cardWidth / 2, y + 40);
 
+      // Описание
+      ctx.fillStyle = "white";
       ctx.font = "14px sans-serif";
-      ctx.fillStyle = "#aaa";
-      this.wrapText(ctx, option.description, x + cardWidth / 2, y + 80, 180, 20);
+      this.wrapText(ctx, option.description, x + cardWidth / 2, y + 80, cardWidth - 20, 20);
     });
   }
-
+  
   wrapText(ctx, text, x, y, maxWidth, lineHeight) {
     const words = text.split(" ");
     let line = "";

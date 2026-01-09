@@ -4,59 +4,38 @@ export class RenderSystem {
     this.canvas = canvas;
   }
 
-  render(game) {
-    const { ctx, canvas, camera, world, hud, state, GAME_STATE } = game;
+  // Принимаем только то, что относится к игровому миру
+  render(entities, camera, world) {
+    const ctx = this.ctx;
+    const tileSize = world.tileSize || 512;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Определяем начальную точку отрисовки тайлов
+    // Мы берем координату камеры и "округляем" её до размера тайла
+    const startX = Math.floor(camera.x / tileSize) * tileSize;
+    const startY = Math.floor(camera.y / tileSize) * tileSize;
 
-    if (state === game.GAME_STATE.MENU) {
-      game.menuScreen.render(ctx, canvas);
-      return;
+    // Рисуем сетку тайлов, захватывая чуть больше области, чем видит камера
+    for (let x = startX - tileSize; x < startX + this.canvas.width + tileSize; x += tileSize) {
+      for (let y = startY - tileSize; y < startY + this.canvas.height + tileSize; y += tileSize) {
+        // Переводим мировые координаты в экранные
+        const screenX = x - camera.x;
+        const screenY = y - camera.y;
+
+        // Рисуем плитку (можно просто чередовать цвета для эффекта шахматки)
+        ctx.fillStyle = (Math.abs(x + y) / tileSize) % 2 === 0 ? "#1a1a1a" : "#222";
+        ctx.fillRect(screenX, screenY, tileSize, tileSize);
+
+        // Если есть текстура: ctx.drawImage(tileImage, screenX, screenY, tileSize, tileSize);
+      }
     }
-
-    if (state === game.GAME_STATE.GAMEOVER) {
-      game.gameOverScreen.render(ctx, canvas);
-      return;
-    }
-
-    // --- Отрисовка игрового мира ---
-    ctx.save();
-    ctx.translate(-camera.x, -camera.y);
-
-    // Фон мира
-    ctx.fillStyle = "#1a1a1a";
-    ctx.fillRect(0, 0, world.width, world.height);
-
-    // Все сущности (игрок, враги, пули)
-    for (const entity of world.entities) {
-      entity.render(ctx);
-    }
-
-    // Тексты урона
-    game.damageTextSystem.render(ctx);
-
     ctx.restore();
 
-    // --- UI поверх всего ---
-    hud.render(ctx);
-    hud.renderExperience(ctx);
-
-    if (state === game.GAME_STATE.UPGRADE) {
-      game.upgradeScreen.render(ctx, canvas);
-      return;
+    // 2. Рисуем сущности
+    ctx.save();
+    ctx.translate(-camera.x, -camera.y);
+    for (const entity of entities) {
+      if (entity.render) entity.render(ctx);
     }
-
-    if (game.isPaused) {
-      this.renderPauseOverlay();
-    }
-  }
-
-  renderPauseOverlay() {
-    this.ctx.fillStyle = "rgba(0,0,0,0.6)";
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    this.ctx.fillStyle = "white";
-    this.ctx.textAlign = "center";
-    this.ctx.font = "bold 48px sans-serif";
-    this.ctx.fillText("PAUSED", this.canvas.width / 2, this.canvas.height / 2);
+    ctx.restore();
   }
 }

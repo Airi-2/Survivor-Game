@@ -17,9 +17,9 @@ export class DamageTextSystem {
     this.damageTexts = this.damageTexts.filter((t) => !t.isDead);
   }
 
-  render(ctx) {
+  render(ctx, camera) {
     for (const text of this.damageTexts) {
-      text.render(ctx);
+      text.render(ctx, camera);
     }
   }
 }

@@ -1,27 +1,27 @@
 export class HUD {
-  constructor(game) {
-    this.game = game;
+  constructor(canvasWidth, canvasHeight) {
+    // Храним только размеры, чтобы не зависеть от всего объекта game
+    this.width = canvasWidth;
+    this.height = canvasHeight;
   }
 
-  render(ctx) {
-    this.renderHealth(ctx);
-    this.renderTimer(ctx);
-    this.renderAmmo(ctx);
+  // Принимаем всё необходимое для отрисовки
+  render(ctx, player, gameTimer, levelSystem) {
+    this.renderExperience(ctx, levelSystem); // Полоска опыта обычно в самом низу слоев
+    this.renderHealth(ctx, player);
+    this.renderTimer(ctx, gameTimer);
+    this.renderAmmo(ctx, player);
   }
 
-  renderTimer(ctx) {
-    const time = this.game.timeSurvival.formatted;
-
+  renderTimer(ctx, gameTimer) {
+    const time = gameTimer.formatted;
     ctx.fillStyle = "white";
     ctx.font = "20px monospace";
     ctx.textAlign = "right";
-
-    ctx.fillText(time, this.game.canvas.width - 20, 30);
+    ctx.fillText(time, this.width - 20, 30);
   }
 
-  renderHealth(ctx) {
-    const player = this.game.player;
-
+  renderHealth(ctx, player) {
     const x = 20;
     const y = 20;
     const width = 200;
@@ -30,20 +30,51 @@ export class HUD {
     ctx.fillStyle = "#333";
     ctx.fillRect(x, y, width, height);
 
-    const hp = player.health / player.maxHealth;
+    // Добавим проверку на maxHealth, чтобы не делить на 0
+    const hpRatio = player.maxHealth > 0 ? player.health / player.maxHealth : 0;
     ctx.fillStyle = "red";
-    ctx.fillRect(x, y, width * hp, height);
+    ctx.fillRect(x, y, width * Math.max(0, hpRatio), height);
 
     ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
     ctx.strokeRect(x, y, width, height);
   }
 
-  renderAmmo(ctx) {
-    const weapon = this.game.shootingSystem.weapon; // Убедись, что путь к оружию верный
-    const x = 20;
-    const y = this.game.canvas.height - 40;
+  renderExperience(ctx, levelSystem) {
+    const x = 0;
+    const y = 0;
+    const width = this.width;
+    const height = 12; // Сделаем чуть толще для красоты
 
-    // Отрисовка текста патронов
+    // 1. Фон полоски
+    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.fillRect(x, y, width, height);
+
+    // 2. Рассчитываем прогресс
+    // Важно: используем точное имя свойства из твоего LevelSystem: expToNextLevel
+    const progress = Math.min(levelSystem.experience / levelSystem.expToNextLevel, 1);
+
+    // Градиент для красоты (опционально)
+    ctx.fillStyle = "#00ffcc";
+    ctx.fillRect(x, y, width * progress, height);
+
+    // 3. Текст уровня (слева)
+    ctx.fillStyle = "white";
+    ctx.font = "bold 14px Arial";
+    ctx.textAlign = "left";
+    ctx.fillText(`LVL ${levelSystem.level}`, 10, 28);
+
+    // 4. Текст опыта (справа) — ТВОЙ ЗАПРОС
+    ctx.textAlign = "right";
+    const expText = `${Math.floor(levelSystem.experience)} / ${levelSystem.expToNextLevel} XP`;
+    ctx.fillText(expText, this.width - 10, 28);
+  }
+
+  renderAmmo(ctx, player) {
+    const weapon = player.weapon;
+    const x = 20;
+    const y = this.height - 20; // Чуть выше края
+
     ctx.fillStyle = "white";
     ctx.font = "24px monospace";
     ctx.textAlign = "left";
@@ -52,37 +83,5 @@ export class HUD {
     if (weapon.isReloading) text = "RELOADING...";
 
     ctx.fillText(text, x, y);
-
-    // Полоска прогресса перезарядки (если нужно)
-    if (weapon.isReloading) {
-      const progress = 1 - weapon.reloadTimer / weapon.reloadTime;
-      ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-      ctx.fillRect(x, y + 10, 150, 5);
-      ctx.fillStyle = "yellow";
-      ctx.fillRect(x, y + 10, 150 * progress, 5);
-    }
-  }
-
-  renderExperience(ctx) {
-    const levelSystem = this.game.levelSystem;
-    const x = 0;
-    const y = 0; // На самом верху экрана
-    const width = this.game.canvas.width;
-    const height = 10;
-
-    // Фон полоски
-    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    ctx.fillRect(x, y, width, height);
-
-    // Прогресс
-    const progress = levelSystem.experience / levelSystem.expToNextLevel;
-    ctx.fillStyle = "#00ffcc";
-    ctx.fillRect(x, y, width * progress, height);
-
-    // Текст уровня
-    ctx.fillStyle = "white";
-    ctx.font = "bold 14px Arial";
-    ctx.textAlign = "left";
-    ctx.fillText(`LVL ${levelSystem.level}`, 10, 25);
   }
 }

@@ -5,10 +5,10 @@ export class Pistol extends Weapon {
     super({
       damage: 10,
       fireRate: 0.25,
-      projectileSpeed: 800,
+      projectileSpeed: 1000,
       projectileRadius: 5,
       projectileColor: "yellow",
-      range: 1000,
+      range: 400,
     });
   }
 }
